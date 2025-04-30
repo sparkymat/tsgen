@@ -6,7 +6,7 @@ func (s *Service) AddModel(v any) error {
 		return err
 	}
 
-	s.models[m.Name] = m
+	s.models[m.name] = m
 
 	return nil
 }

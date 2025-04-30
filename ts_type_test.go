@@ -39,7 +39,8 @@ func TestStructToTSType(t *testing.T) {
 		name           string
 		v              any
 		addID          bool
-		expectedOutput tsgen.TSType
+		expectedName   string
+		expectedFields map[string]string
 		wantErr        bool
 	}{
 		{
@@ -55,15 +56,13 @@ func TestStructToTSType(t *testing.T) {
 
 				return val
 			}(),
-			expectedOutput: tsgen.TSType{
-				Name: "User",
-				Fields: map[string]string{
-					"id":          "string",
-					"name":        "string",
-					"postCount":   "number",
-					"upgradedAt?": "string",
-					"verified":    "boolean",
-				},
+			expectedName: "User",
+			expectedFields: map[string]string{
+				"id":          "string",
+				"name":        "string",
+				"postCount":   "number",
+				"upgradedAt?": "string",
+				"verified":    "boolean",
 			},
 			wantErr: false,
 		},
@@ -79,16 +78,14 @@ func TestStructToTSType(t *testing.T) {
 
 				return val
 			}(),
-			addID: true,
-			expectedOutput: tsgen.TSType{
-				Name: "User",
-				Fields: map[string]string{
-					"id":          "string",
-					"name":        "string",
-					"postCount":   "number",
-					"upgradedAt?": "string",
-					"verified":    "boolean",
-				},
+			addID:        true,
+			expectedName: "User",
+			expectedFields: map[string]string{
+				"id":          "string",
+				"name":        "string",
+				"postCount":   "number",
+				"upgradedAt?": "string",
+				"verified":    "boolean",
 			},
 			wantErr: false,
 		},
@@ -104,14 +101,12 @@ func TestStructToTSType(t *testing.T) {
 
 				return val
 			}(),
-			expectedOutput: tsgen.TSType{
-				Name: "Post",
-				Fields: map[string]string{
-					"id":       "string",
-					"title":    "string",
-					"author":   "User",
-					"comments": "Comment[]",
-				},
+			expectedName: "Post",
+			expectedFields: map[string]string{
+				"id":       "string",
+				"title":    "string",
+				"author":   "User",
+				"comments": "Comment[]",
 			},
 			wantErr: false,
 		},
@@ -127,7 +122,8 @@ func TestStructToTSType(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectedOutput, output)
+				assert.Equal(t, tt.expectedName, output.Name())
+				assert.Equal(t, tt.expectedFields, output.Fields())
 			}
 		})
 	}

@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
+
+	tpl "github.com/sparkymat/tsgen/template"
 )
 
 func (s *Service) ExportToFS(path string) error {
@@ -22,7 +24,7 @@ func (s *Service) ExportToFS(path string) error {
 			return fmt.Errorf("failed to create folder '%s': %w", finalFolder, err)
 		}
 
-		if err := os.WriteFile(finalPath, fileBytes, 0o644); err != nil { //nolint:mnd
+		if err := os.WriteFile(finalPath, fileBytes, 0o600); err != nil { //nolint:mnd
 			return fmt.Errorf("failed to write file '%s': %w", finalPath, err)
 		}
 	}
@@ -35,9 +37,9 @@ func (s *Service) Export() (map[string][]byte, error) {
 
 	// Models
 	for _, m := range s.models {
-		filePath := filepath.Join("models", m.Name+".ts")
+		filePath := filepath.Join("models", m.name+".ts")
 
-		content, err := renderTemplateToString(modelTS, m)
+		content, err := renderTemplateToString(tpl.ModelTS, m)
 		if err != nil {
 			return nil, fmt.Errorf("failed to export model %s: %w", m.Name, err)
 		}
@@ -48,7 +50,7 @@ func (s *Service) Export() (map[string][]byte, error) {
 	for _, thisSlice := range s.slices {
 		filePath := filepath.Join("slices", thisSlice.Name+".ts")
 
-		content, err := renderTemplateToString(sliceTS, thisSlice)
+		content, err := renderTemplateToString(tpl.SliceTS, thisSlice)
 		if err != nil {
 			return nil, fmt.Errorf("failed to export slice %s: %w", thisSlice.Name, err)
 		}

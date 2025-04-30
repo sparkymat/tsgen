@@ -7,6 +7,7 @@ import (
 	"github.com/gertd/go-pluralize"
 	"github.com/iancoleman/strcase"
 	"github.com/samber/lo"
+	"github.com/sparkymat/tsgen/template"
 )
 
 type Action string
@@ -57,7 +58,7 @@ func (s Slice) RenderedInterfaceDefinitions() (string, error) {
 	v := ""
 
 	for _, interfaceEntry := range s.Interfaces {
-		renderedInterface, err := renderTemplateToString(interfaceTS, interfaceEntry)
+		renderedInterface, err := renderTemplateToString(template.InterfaceTS, interfaceEntry)
 		if err != nil {
 			return "", err
 		}
@@ -104,7 +105,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				requestInput = "({ parentId, request  })"
 			}
 
-			renderedEntry, err := renderTemplateToString(createActionTS, map[string]string{
+			renderedEntry, err := renderTemplateToString(template.CreateActionTS, map[string]string{
 				"RequestInput":      requestInput,
 				"ResponseType":      entry.ResponseType,
 				"RequestType":       requestType,
@@ -118,7 +119,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 
 			v += renderedEntry
 		case ActionShow:
-			renderedEntry, err := renderTemplateToString(showActionTS, map[string]string{
+			renderedEntry, err := renderTemplateToString(template.ShowActionTS, map[string]string{
 				"ResponseType": entry.ResponseType,
 				"RequestType":  entry.RequestType,
 				"ResourceURL":  resourceURL,
@@ -146,7 +147,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				"FieldNames":    fieldNames,
 			}
 
-			renderedEntry, err := renderTemplateToString(customQueryActionTS, values)
+			renderedEntry, err := renderTemplateToString(template.CustomQueryActionTS, values)
 			if err != nil {
 				return "", err
 			}
@@ -160,7 +161,6 @@ func (s Slice) RenderedEndpoints() (string, error) {
 			fields := []string{}
 			if entry.ParentResourceName != "" {
 				fields = append(fields, "parentId")
-
 			}
 
 			fields = append(fields, entry.RequestFields...)
@@ -180,14 +180,14 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				"FieldNames":    fieldNames,
 			}
 
-			renderedEntry, err := renderTemplateToString(listActionTS, values)
+			renderedEntry, err := renderTemplateToString(template.ListActionTS, values)
 			if err != nil {
 				return "", err
 			}
 
 			v += renderedEntry
 		case ActionDestroy:
-			renderedEntry, err := renderTemplateToString(destroyActionTS, map[string]string{
+			renderedEntry, err := renderTemplateToString(template.DestroyActionTS, map[string]string{
 				"ResourceURL":       resourceURL,
 				"Resource":          s.Name,
 				"CustomInvalidates": customInvalidatesString,
@@ -202,7 +202,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 			fieldAssignments := strings.Join(otherFields, ",\n")
 			fieldNames := strings.Join(otherFields, ", ")
 
-			renderedEntry, err := renderTemplateToString(updateActionTS, map[string]string{
+			renderedEntry, err := renderTemplateToString(template.UpdateActionTS, map[string]string{
 				"ResourceURL":       resourceURL,
 				"Resource":          s.Name,
 				"FieldNames":        fieldNames,
@@ -221,7 +221,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 			fieldAssignments := strings.Join(otherFields, ",\n")
 			fieldNames := strings.Join(otherFields, ", ")
 
-			renderedEntry, err := renderTemplateToString(customMemberActionTS, map[string]string{
+			renderedEntry, err := renderTemplateToString(template.CustomMemberActionTS, map[string]string{
 				"MethodName":        entry.MethodName,
 				"ResourceURL":       resourceURL,
 				"Resource":          s.Name,
@@ -243,7 +243,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 			}), "\n")
 			fieldNames := strings.Join(otherFields, ", ")
 
-			renderedEntry, err := renderTemplateToString(customMemberMultipartAction, map[string]string{
+			renderedEntry, err := renderTemplateToString(template.CustomMemberMultipartAction, map[string]string{
 				"MethodName":          entry.MethodName,
 				"ResourceURL":         resourceURL,
 				"Resource":            s.Name,
@@ -286,6 +286,10 @@ func (s Slice) RenderedExports() string {
 			v += fmt.Sprintf("use%sMutation,\n", strcase.ToCamel(entry.MethodName))
 		case ActionCustomMemberMultipartAction:
 			v += fmt.Sprintf("use%sMutation,\n", strcase.ToCamel(entry.MethodName))
+		case ActionCustomAction:
+		case ActionCustomMemberQuery:
+		default:
+			panic(fmt.Sprintf("unexpected tsgen.Action: %#v", entry.Action))
 		}
 	}
 
@@ -340,29 +344,29 @@ func (s *Service) AddSliceEntry(
 			}
 
 			if fileField != "" {
-				inType.Fields[fileField] = "File"
+				inType.fields[fileField] = "File"
 			}
 
-			if _, found := s.models[inType.Name]; found {
-				if !lo.Contains(thisSlice.ImportedModels, inType.Name) {
-					thisSlice.ImportedModels = append(thisSlice.ImportedModels, inType.Name)
+			if _, found := s.models[inType.name]; found {
+				if !lo.Contains(thisSlice.ImportedModels, inType.name) {
+					thisSlice.ImportedModels = append(thisSlice.ImportedModels, inType.name)
 				}
 			} else {
-				thisSlice.Interfaces[inType.Name] = inType
+				thisSlice.Interfaces[inType.name] = inType
 
 				if parentResourceName != "" {
-					thisSlice.Interfaces[inType.Name+"WithParent"] = TSType{
-						Name: inType.Name + "WithParent",
-						Fields: map[string]string{
+					thisSlice.Interfaces[inType.name+"WithParent"] = TSType{
+						name: inType.name + "WithParent",
+						fields: map[string]string{
 							"parentId": "string",
-							"request":  inType.Name,
+							"request":  inType.name,
 						},
 					}
 				}
 			}
 
-			entry.RequestType = inType.Name
-			entry.RequestFields = lo.Keys(inType.Fields)
+			entry.RequestType = inType.name
+			entry.RequestFields = lo.Keys(inType.fields)
 		}
 	}
 
@@ -372,15 +376,15 @@ func (s *Service) AddSliceEntry(
 			return err
 		}
 
-		if _, found := s.models[outType.Name]; found {
-			if !lo.Contains(thisSlice.ImportedModels, outType.Name) {
-				thisSlice.ImportedModels = append(thisSlice.ImportedModels, outType.Name)
+		if _, found := s.models[outType.name]; found {
+			if !lo.Contains(thisSlice.ImportedModels, outType.name) {
+				thisSlice.ImportedModels = append(thisSlice.ImportedModels, outType.name)
 			}
 		} else {
-			thisSlice.Interfaces[outType.Name] = outType
+			thisSlice.Interfaces[outType.name] = outType
 		}
 
-		entry.ResponseType = outType.Name
+		entry.ResponseType = outType.name
 	}
 
 	thisSlice.Entries = append(thisSlice.Entries, entry)

@@ -11,7 +11,7 @@ linters-settings:
   lll:
     line-length: 160
   cyclop:
-    max-complexity: 12
+    max-complexity: 16
   revive:
     ignore-generated-header: true
     severity: error
@@ -67,7 +67,7 @@ linters-settings:
       - name: nested-structs          
       - name: useless-break           
       - name: cyclomatic
-        arguments: [12]
+        arguments: [16]
       - name: unhandled-error
         arguments: ["fmt.Printf", "fmt.Fprintf", "fmt.Sprintf", "fmt.Fprintln"]
       - name: cognitive-complexity

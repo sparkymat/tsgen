@@ -1,36 +1,36 @@
-package tsgen
+package template
 
 import _ "embed"
 
 //go:embed model.ts.tpl
-var modelTS string
+var ModelTS string
 
 //go:embed interface.ts.tpl
-var interfaceTS string
+var InterfaceTS string
 
 //go:embed slice.ts.tpl
-var sliceTS string
+var SliceTS string
 
 //go:embed create_action.ts.tpl
-var createActionTS string
+var CreateActionTS string
 
 //go:embed show_action.ts.tpl
-var showActionTS string
+var ShowActionTS string
 
 //go:embed custom_query_action.ts.tpl
-var customQueryActionTS string
+var CustomQueryActionTS string
 
 //go:embed list_action.ts.tpl
-var listActionTS string
+var ListActionTS string
 
 //go:embed destroy_action.ts.tpl
-var destroyActionTS string
+var DestroyActionTS string
 
 //go:embed update_action.ts.tpl
-var updateActionTS string
+var UpdateActionTS string
 
 //go:embed custom_member_action.ts.tpl
-var customMemberActionTS string
+var CustomMemberActionTS string
 
 //go:embed custom_member_multipart_action.ts.tpl
-var customMemberMultipartAction string
+var CustomMemberMultipartAction string

@@ -12,14 +12,22 @@ import (
 var ErrInvalidType = errors.New("invalid type")
 
 type TSType struct {
-	Name   string
-	Fields map[string]string
+	name   string
+	fields map[string]string
+}
+
+func (m TSType) Name() string {
+	return m.name
+}
+
+func (m TSType) Fields() map[string]string {
+	return m.fields
 }
 
 func (m TSType) RenderedFieldsForClass() string {
 	v := ""
 
-	for name, fType := range m.Fields {
+	for name, fType := range m.fields {
 		v += fmt.Sprintf("  public %s: %s;\n\n", name, fType)
 	}
 
@@ -29,7 +37,7 @@ func (m TSType) RenderedFieldsForClass() string {
 func (m TSType) RenderedFieldsForInterface() string {
 	v := ""
 
-	for name, fType := range m.Fields {
+	for name, fType := range m.fields {
 		v += fmt.Sprintf("  %s: %s;\n", name, fType)
 	}
 
@@ -43,7 +51,7 @@ func isModel(fType string) bool {
 func (m TSType) RenderedFieldAssignments() string {
 	v := ""
 
-	for name, fType := range m.Fields {
+	for name, fType := range m.fields {
 		trimmedName := strings.TrimSuffix(name, "?")
 
 		if strings.HasSuffix(name, "?") {
@@ -69,7 +77,7 @@ func (m TSType) Imports() string {
 
 	models := lo.Uniq(
 		lo.Filter(
-			lo.Values(m.Fields),
+			lo.Values(m.fields),
 			func(fType string, _ int) bool { return isModel(fType) },
 		),
 	)
@@ -93,12 +101,12 @@ func StructToTSType(v any, addID bool) (TSType, error) {
 	}
 
 	tt := TSType{
-		Name:   val.Type().Name(),
-		Fields: map[string]string{},
+		name:   val.Type().Name(),
+		fields: map[string]string{},
 	}
 
 	if addID {
-		tt.Fields["id"] = "string"
+		tt.fields["id"] = "string"
 	}
 
 	for fi := range val.Type().NumField() {
@@ -120,7 +128,7 @@ func StructToTSType(v any, addID bool) (TSType, error) {
 
 		fieldName, fieldType := fieldToTSType(fieldName, f.Type)
 
-		tt.Fields[fieldName] = fieldType
+		tt.fields[fieldName] = fieldType
 	}
 
 	return tt, nil
