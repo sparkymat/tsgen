@@ -1,11 +1,12 @@
 module github.com/sparkymat/tsgen
 
-go 1.24.0
+go 1.24.2
 
 require (
+	github.com/gertd/go-pluralize v0.2.1
+	github.com/iancoleman/strcase v0.3.0
 	github.com/samber/lo v1.49.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/mod v0.24.0
 )
 
 require (

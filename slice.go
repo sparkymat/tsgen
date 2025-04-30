@@ -1,0 +1,391 @@
+package tsgen
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/gertd/go-pluralize"
+	"github.com/iancoleman/strcase"
+	"github.com/samber/lo"
+)
+
+type Action string
+
+const (
+	ActionCreate                      Action = "create"
+	ActionShow                        Action = "show"
+	ActionDestroy                     Action = "destroy"
+	ActionList                        Action = "list"
+	ActionUpdate                      Action = "update"
+	ActionCustomAction                Action = "customAction"
+	ActionCustomQuery                 Action = "customQuery"
+	ActionCustomMemberAction          Action = "customMemberAction"
+	ActionCustomMemberMultipartAction Action = "customMemberMultipartAction"
+	ActionCustomMemberQuery           Action = "customMemberQuery"
+)
+
+type SliceEntry struct {
+	ParentResourceName string
+	MethodName         string
+	Action             Action
+	RequestType        string
+	ResponseType       string
+	RequestFields      []string
+	FileField          string
+}
+
+type Slice struct {
+	Name           string
+	Entries        []SliceEntry
+	Interfaces     map[string]TSType
+	ImportedModels []string
+}
+
+func (s Slice) ReducerPath() string {
+	pl := pluralize.NewClient()
+
+	return strcase.ToSnake(pl.Plural(s.Name))
+}
+
+func (s Slice) ResourceURL() string {
+	pl := pluralize.NewClient()
+
+	return strcase.ToSnake(pl.Plural(s.Name))
+}
+
+func (s Slice) RenderedInterfaceDefinitions() (string, error) {
+	v := ""
+
+	for _, interfaceEntry := range s.Interfaces {
+		renderedInterface, err := renderTemplateToString(interfaceTS, interfaceEntry)
+		if err != nil {
+			return "", err
+		}
+
+		v += (renderedInterface + "\n")
+	}
+
+	return v, nil
+}
+
+func (s Slice) RenderedEndpoints() (string, error) {
+	v := ""
+
+	customCollectionEntries := lo.Filter(s.Entries, func(e SliceEntry, _ int) bool {
+		return e.Action == ActionCustomQuery
+	})
+
+	customInvalidates := lo.Map(customCollectionEntries, func(e SliceEntry, _ int) string {
+		return fmt.Sprintf("{type: '%s', id: '%s'},", s.Name, e.MethodName)
+	})
+
+	customInvalidatesString := strings.Join(customInvalidates, "\n")
+
+	pl := pluralize.NewClient()
+
+	for _, entry := range s.Entries {
+		resourceURL := s.ResourceURL()
+
+		if entry.ParentResourceName != "" {
+			parentURL := strcase.ToSnake(pl.Plural(entry.ParentResourceName)) + "/${parentId}/"
+
+			resourceURL = parentURL + resourceURL
+		}
+
+		switch entry.Action {
+		case ActionCreate:
+			requestType := entry.RequestType
+			if entry.ParentResourceName != "" {
+				requestType += "WithParent"
+			}
+
+			requestInput := "request"
+			if entry.ParentResourceName != "" {
+				requestInput = "({ parentId, request  })"
+			}
+
+			renderedEntry, err := renderTemplateToString(createActionTS, map[string]string{
+				"RequestInput":      requestInput,
+				"ResponseType":      entry.ResponseType,
+				"RequestType":       requestType,
+				"ResourceURL":       resourceURL,
+				"Resource":          s.Name,
+				"CustomInvalidates": customInvalidatesString,
+			})
+			if err != nil {
+				return "", err
+			}
+
+			v += renderedEntry
+		case ActionShow:
+			renderedEntry, err := renderTemplateToString(showActionTS, map[string]string{
+				"ResponseType": entry.ResponseType,
+				"RequestType":  entry.RequestType,
+				"ResourceURL":  resourceURL,
+				"Resource":     s.Name,
+			})
+			if err != nil {
+				return "", err
+			}
+
+			v += renderedEntry
+		case ActionCustomQuery:
+			resourceQuery := strings.Join(lo.Map(entry.RequestFields, func(v string, _ int) string {
+				return v + "=${encodeURIComponent(" + v + ")}"
+			}), "&")
+
+			fieldNames := strings.Join(entry.RequestFields, ", ")
+
+			values := map[string]string{
+				"MethodName":    entry.MethodName,
+				"ResponseType":  entry.ResponseType,
+				"RequestType":   entry.RequestType,
+				"ResourceURL":   resourceURL,
+				"Resource":      s.Name,
+				"ResourceQuery": "?" + resourceQuery,
+				"FieldNames":    fieldNames,
+			}
+
+			renderedEntry, err := renderTemplateToString(customQueryActionTS, values)
+			if err != nil {
+				return "", err
+			}
+
+			v += renderedEntry
+		case ActionList:
+			resourceQuery := strings.Join(lo.Map(entry.RequestFields, func(v string, _ int) string {
+				return v + "=${encodeURIComponent(" + v + ")}"
+			}), "&")
+
+			fields := []string{}
+			if entry.ParentResourceName != "" {
+				fields = append(fields, "parentId")
+
+			}
+
+			fields = append(fields, entry.RequestFields...)
+			fieldNames := strings.Join(fields, ", ")
+
+			requestType := entry.RequestType
+			if entry.ParentResourceName != "" {
+				requestType += "WithParent"
+			}
+
+			values := map[string]string{
+				"ResponseType":  entry.ResponseType,
+				"RequestType":   requestType,
+				"ResourceURL":   resourceURL,
+				"Resource":      s.Name,
+				"ResourceQuery": "?" + resourceQuery,
+				"FieldNames":    fieldNames,
+			}
+
+			renderedEntry, err := renderTemplateToString(listActionTS, values)
+			if err != nil {
+				return "", err
+			}
+
+			v += renderedEntry
+		case ActionDestroy:
+			renderedEntry, err := renderTemplateToString(destroyActionTS, map[string]string{
+				"ResourceURL":       resourceURL,
+				"Resource":          s.Name,
+				"CustomInvalidates": customInvalidatesString,
+			})
+			if err != nil {
+				return "", err
+			}
+
+			v += renderedEntry
+		case ActionUpdate:
+			otherFields := lo.Filter(entry.RequestFields, func(f string, _ int) bool { return f != "id" })
+			fieldAssignments := strings.Join(otherFields, ",\n")
+			fieldNames := strings.Join(otherFields, ", ")
+
+			renderedEntry, err := renderTemplateToString(updateActionTS, map[string]string{
+				"ResourceURL":       resourceURL,
+				"Resource":          s.Name,
+				"FieldNames":        fieldNames,
+				"ResponseType":      entry.ResponseType,
+				"RequestType":       entry.RequestType,
+				"FieldAssignments":  fieldAssignments,
+				"CustomInvalidates": customInvalidatesString,
+			})
+			if err != nil {
+				return "", err
+			}
+
+			v += renderedEntry
+		case ActionCustomMemberAction:
+			otherFields := lo.Filter(entry.RequestFields, func(f string, _ int) bool { return f != "id" })
+			fieldAssignments := strings.Join(otherFields, ",\n")
+			fieldNames := strings.Join(otherFields, ", ")
+
+			renderedEntry, err := renderTemplateToString(customMemberActionTS, map[string]string{
+				"MethodName":        entry.MethodName,
+				"ResourceURL":       resourceURL,
+				"Resource":          s.Name,
+				"FieldNames":        fieldNames,
+				"ResponseType":      entry.ResponseType,
+				"RequestType":       entry.RequestType,
+				"FieldAssignments":  fieldAssignments,
+				"CustomInvalidates": customInvalidatesString,
+			})
+			if err != nil {
+				return "", err
+			}
+
+			v += renderedEntry
+		case ActionCustomMemberMultipartAction:
+			otherFields := lo.Filter(entry.RequestFields, func(f string, _ int) bool { return f != "id" })
+			formDataAssignments := strings.Join(lo.Map(otherFields, func(fName string, _ int) string {
+				return fmt.Sprintf("formData.append('%s', %s);", fName, fName)
+			}), "\n")
+			fieldNames := strings.Join(otherFields, ", ")
+
+			renderedEntry, err := renderTemplateToString(customMemberMultipartAction, map[string]string{
+				"MethodName":          entry.MethodName,
+				"ResourceURL":         resourceURL,
+				"Resource":            s.Name,
+				"FieldNames":          fieldNames,
+				"ResponseType":        entry.ResponseType,
+				"RequestType":         entry.RequestType,
+				"FormDataAssignments": formDataAssignments,
+				"FileField":           entry.FileField,
+				"CustomInvalidates":   customInvalidatesString,
+			})
+			if err != nil {
+				return "", err
+			}
+
+			v += renderedEntry
+		}
+	}
+
+	return v, nil
+}
+
+func (s Slice) RenderedExports() string {
+	v := ""
+
+	for _, entry := range s.Entries {
+		switch entry.Action {
+		case ActionCreate:
+			v += "useCreateMutation,\n"
+		case ActionShow:
+			v += "useShowQuery,\n"
+		case ActionDestroy:
+			v += "useDestroyMutation,\n"
+		case ActionCustomQuery:
+			v += fmt.Sprintf("use%sQuery,\n", strcase.ToCamel(entry.MethodName))
+		case ActionList:
+			v += "useListQuery,\n"
+		case ActionUpdate:
+			v += "useUpdateMutation,\n"
+		case ActionCustomMemberAction:
+			v += fmt.Sprintf("use%sMutation,\n", strcase.ToCamel(entry.MethodName))
+		case ActionCustomMemberMultipartAction:
+			v += fmt.Sprintf("use%sMutation,\n", strcase.ToCamel(entry.MethodName))
+		}
+	}
+
+	return v
+}
+
+func (s Slice) RenderedImports() string {
+	v := ""
+
+	for _, m := range s.ImportedModels {
+		v += fmt.Sprintf("import { %s } from '../models/%s';", m, m)
+	}
+
+	return v
+}
+
+func (s *Service) AddSliceEntry(
+	resourceName string,
+	parentResourceName string,
+	methodName string,
+	action Action,
+	in any,
+	out any,
+	addIDToIn bool,
+	fileField string,
+) error {
+	thisSlice, found := s.slices[resourceName]
+
+	if !found {
+		thisSlice = Slice{
+			Name:       resourceName,
+			Entries:    []SliceEntry{},
+			Interfaces: map[string]TSType{},
+		}
+	}
+
+	entry := SliceEntry{
+		ParentResourceName: parentResourceName,
+		MethodName:         methodName,
+		Action:             action,
+		FileField:          fileField,
+	}
+
+	if in != nil {
+		if inString, isString := in.(string); isString {
+			entry.RequestType = inString
+			entry.RequestFields = []string{}
+		} else {
+			inType, err := StructToTSType(in, addIDToIn)
+			if err != nil {
+				return err
+			}
+
+			if fileField != "" {
+				inType.Fields[fileField] = "File"
+			}
+
+			if _, found := s.models[inType.Name]; found {
+				if !lo.Contains(thisSlice.ImportedModels, inType.Name) {
+					thisSlice.ImportedModels = append(thisSlice.ImportedModels, inType.Name)
+				}
+			} else {
+				thisSlice.Interfaces[inType.Name] = inType
+
+				if parentResourceName != "" {
+					thisSlice.Interfaces[inType.Name+"WithParent"] = TSType{
+						Name: inType.Name + "WithParent",
+						Fields: map[string]string{
+							"parentId": "string",
+							"request":  inType.Name,
+						},
+					}
+				}
+			}
+
+			entry.RequestType = inType.Name
+			entry.RequestFields = lo.Keys(inType.Fields)
+		}
+	}
+
+	if out != nil {
+		outType, err := StructToTSType(out, false)
+		if err != nil {
+			return err
+		}
+
+		if _, found := s.models[outType.Name]; found {
+			if !lo.Contains(thisSlice.ImportedModels, outType.Name) {
+				thisSlice.ImportedModels = append(thisSlice.ImportedModels, outType.Name)
+			}
+		} else {
+			thisSlice.Interfaces[outType.Name] = outType
+		}
+
+		entry.ResponseType = outType.Name
+	}
+
+	thisSlice.Entries = append(thisSlice.Entries, entry)
+
+	s.slices[resourceName] = thisSlice
+
+	return nil
+}
