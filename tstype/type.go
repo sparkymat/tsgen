@@ -1,10 +1,8 @@
-package tsgen
+package tstype
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/samber/lo"
 )
@@ -16,81 +14,26 @@ type TSType struct {
 	fields map[string]string
 }
 
-func (m TSType) Name() string {
-	return m.name
-}
-
-func (m TSType) Fields() map[string]string {
-	return m.fields
-}
-
-func (m TSType) RenderedFieldsForClass() string {
-	v := ""
-
-	for name, fType := range m.fields {
-		v += fmt.Sprintf("  public %s: %s;\n\n", name, fType)
+func New(name string) TSType {
+	return TSType{
+		name: name,
 	}
-
-	return v
 }
 
-func (m TSType) RenderedFieldsForInterface() string {
-	v := ""
+func (t *TSType) Name() string {
+	return t.name
+}
 
-	for name, fType := range m.fields {
-		v += fmt.Sprintf("  %s: %s;\n", name, fType)
-	}
+func (t *TSType) Fields() map[string]string {
+	return t.fields
+}
 
-	return v
+func (t *TSType) AddField(name string, typeName string) {
+	t.fields[name] = typeName
 }
 
 func isModel(fType string) bool {
 	return !lo.Contains([]string{"string", "number", "boolean"}, fType)
-}
-
-func (m TSType) RenderedFieldAssignments() string {
-	v := ""
-
-	for name, fType := range m.fields {
-		trimmedName := strings.TrimSuffix(name, "?")
-
-		if strings.HasSuffix(name, "?") {
-			v += fmt.Sprintf("    if (json.%s) {\n  ", trimmedName)
-		}
-
-		if isModel(fType) {
-			v += fmt.Sprintf("    this.%s = new %s(json.%s);\n", trimmedName, fType, trimmedName)
-		} else {
-			v += fmt.Sprintf("    this.%s = json.%s;\n", trimmedName, trimmedName)
-		}
-
-		if strings.HasSuffix(name, "?") {
-			v += "    }\n"
-		}
-	}
-
-	return v
-}
-
-func (m TSType) Imports() string {
-	v := ""
-
-	models := lo.Uniq(
-		lo.Filter(
-			lo.Values(m.fields),
-			func(fType string, _ int) bool { return isModel(fType) },
-		),
-	)
-
-	for _, model := range models {
-		v += fmt.Sprintf("import { %s } from './%s';\n", model, model)
-	}
-
-	if len(models) > 0 {
-		v += "\n"
-	}
-
-	return v
 }
 
 func StructToTSType(v any, addID bool) (TSType, error) {

@@ -8,6 +8,7 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/samber/lo"
 	"github.com/sparkymat/tsgen/template"
+	"github.com/sparkymat/tsgen/tstype"
 )
 
 type Action string
@@ -38,7 +39,7 @@ type SliceEntry struct {
 type Slice struct {
 	Name           string
 	Entries        []SliceEntry
-	Interfaces     map[string]TSType
+	Interfaces     map[string]tstype.TSType
 	ImportedModels []string
 }
 
@@ -259,6 +260,10 @@ func (s Slice) RenderedEndpoints() (string, error) {
 			}
 
 			v += renderedEntry
+
+		case ActionCustomAction:
+		case ActionCustomMemberQuery:
+		default:
 		}
 	}
 
@@ -289,7 +294,6 @@ func (s Slice) RenderedExports() string {
 		case ActionCustomAction:
 		case ActionCustomMemberQuery:
 		default:
-			panic(fmt.Sprintf("unexpected tsgen.Action: %#v", entry.Action))
 		}
 	}
 
@@ -322,7 +326,7 @@ func (s *Service) AddSliceEntry(
 		thisSlice = Slice{
 			Name:       resourceName,
 			Entries:    []SliceEntry{},
-			Interfaces: map[string]TSType{},
+			Interfaces: map[string]tstype.TSType{},
 		}
 	}
 
@@ -338,53 +342,50 @@ func (s *Service) AddSliceEntry(
 			entry.RequestType = inString
 			entry.RequestFields = []string{}
 		} else {
-			inType, err := StructToTSType(in, addIDToIn)
+			inType, err := tstype.StructToTSType(in, addIDToIn)
 			if err != nil {
 				return err
 			}
 
 			if fileField != "" {
-				inType.fields[fileField] = "File"
+				inType.AddField(fileField, "File")
 			}
 
-			if _, found := s.models[inType.name]; found {
-				if !lo.Contains(thisSlice.ImportedModels, inType.name) {
-					thisSlice.ImportedModels = append(thisSlice.ImportedModels, inType.name)
+			if _, found := s.models[inType.Name()]; found {
+				if !lo.Contains(thisSlice.ImportedModels, inType.Name()) {
+					thisSlice.ImportedModels = append(thisSlice.ImportedModels, inType.Name())
 				}
 			} else {
-				thisSlice.Interfaces[inType.name] = inType
+				thisSlice.Interfaces[inType.Name()] = inType
 
 				if parentResourceName != "" {
-					thisSlice.Interfaces[inType.name+"WithParent"] = TSType{
-						name: inType.name + "WithParent",
-						fields: map[string]string{
-							"parentId": "string",
-							"request":  inType.name,
-						},
-					}
+					wrapperType := tstype.New(inType.Name() + "WithParent")
+					wrapperType.AddField("parentId", "string")
+					wrapperType.AddField("request", inType.Name())
+					thisSlice.Interfaces[inType.Name()+"WithParent"] = wrapperType
 				}
 			}
 
-			entry.RequestType = inType.name
-			entry.RequestFields = lo.Keys(inType.fields)
+			entry.RequestType = inType.Name()
+			entry.RequestFields = lo.Keys(inType.Fields())
 		}
 	}
 
 	if out != nil {
-		outType, err := StructToTSType(out, false)
+		outType, err := tstype.StructToTSType(out, false)
 		if err != nil {
 			return err
 		}
 
-		if _, found := s.models[outType.name]; found {
-			if !lo.Contains(thisSlice.ImportedModels, outType.name) {
-				thisSlice.ImportedModels = append(thisSlice.ImportedModels, outType.name)
+		if _, found := s.models[outType.Name()]; found {
+			if !lo.Contains(thisSlice.ImportedModels, outType.Name()) {
+				thisSlice.ImportedModels = append(thisSlice.ImportedModels, outType.Name())
 			}
 		} else {
-			thisSlice.Interfaces[outType.name] = outType
+			thisSlice.Interfaces[outType.Name()] = outType
 		}
 
-		entry.ResponseType = outType.name
+		entry.ResponseType = outType.Name()
 	}
 
 	thisSlice.Entries = append(thisSlice.Entries, entry)

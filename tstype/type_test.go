@@ -1,9 +1,9 @@
-package tsgen_test
+package tstype_test
 
 import (
 	"testing"
 
-	"github.com/sparkymat/tsgen"
+	"github.com/sparkymat/tsgen/tstype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -116,7 +116,7 @@ func TestStructToTSType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			output, err := tsgen.StructToTSType(tt.v, tt.addID)
+			output, err := tstype.StructToTSType(tt.v, tt.addID)
 
 			if tt.wantErr {
 				require.Error(t, err)

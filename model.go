@@ -1,12 +1,14 @@
 package tsgen
 
+import "github.com/sparkymat/tsgen/tstype"
+
 func (s *Service) AddModel(v any) error {
-	m, err := StructToTSType(v, false)
+	m, err := tstype.StructToTSType(v, false)
 	if err != nil {
 		return err
 	}
 
-	s.models[m.name] = m
+	s.models[m.Name()] = m
 
 	return nil
 }

@@ -37,11 +37,11 @@ func (s *Service) Export() (map[string][]byte, error) {
 
 	// Models
 	for _, m := range s.models {
-		filePath := filepath.Join("models", m.name+".ts")
+		filePath := filepath.Join("models", m.Name()+".ts")
 
-		content, err := renderTemplateToString(tpl.ModelTS, m)
+		content, err := renderTemplateToString(tpl.ModelTS, &m)
 		if err != nil {
-			return nil, fmt.Errorf("failed to export model %s: %w", m.Name, err)
+			return nil, fmt.Errorf("failed to export model %s: %w", m.Name(), err)
 		}
 
 		fileMap[filePath] = []byte(content)
@@ -61,10 +61,10 @@ func (s *Service) Export() (map[string][]byte, error) {
 	return fileMap, nil
 }
 
-func renderTemplateToString(tpl string, obj any) (string, error) {
+func renderTemplateToString(templateString string, obj any) (string, error) {
 	var buf bytes.Buffer
 
-	tmpl, err := template.New("foo").Parse(tpl)
+	tmpl, err := template.New("foo").Parse(templateString)
 	if err != nil {
 		return "", fmt.Errorf("failed to load template: %w", err)
 	}
