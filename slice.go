@@ -2,6 +2,7 @@ package tsgen
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/gertd/go-pluralize"
@@ -31,7 +32,9 @@ type SliceEntry struct {
 	MethodName         string
 	Action             Action
 	RequestType        string
+	RequestTSType      *tstype.TSType
 	ResponseType       string
+	ResponseTSType     *tstype.TSType
 	RequestFields      []string
 	FileField          string
 }
@@ -303,8 +306,35 @@ func (s Slice) RenderedExports() string {
 func (s Slice) RenderedImports() string {
 	v := ""
 
-	for _, m := range s.ImportedModels {
-		v += fmt.Sprintf("import { %s } from '../models/%s';", m, m)
+	interfaceTypes := []string{}
+	usedTypes := []string{}
+
+	for _, entry := range s.Entries {
+		if entry.RequestTSType != nil {
+			for _, fieldType := range entry.RequestTSType.Fields() {
+				usedTypes = append(usedTypes, fieldType)
+			}
+		}
+
+		if entry.ResponseTSType != nil {
+			for _, fieldType := range entry.ResponseTSType.Fields() {
+				usedTypes = append(usedTypes, fieldType)
+			}
+		}
+	}
+
+	missingTypes := lo.Filter(usedTypes, func(tt string, _ int) bool {
+		return !lo.Contains(interfaceTypes, tt)
+	})
+
+	// Remove basic types and sort it
+	missingTypes = lo.Filter(missingTypes, func(tt string, _ int) bool {
+		return !lo.Contains([]string{"string", "number", "boolean"}, tt)
+	})
+	slices.Sort(missingTypes)
+
+	for _, m := range missingTypes {
+		v += fmt.Sprintf("import { %s } from '../models/%s';\n", m, m)
 	}
 
 	return v
@@ -367,6 +397,7 @@ func (s *Service) AddSliceEntry(
 			}
 
 			entry.RequestType = inType.Name()
+			entry.RequestTSType = &inType
 			entry.RequestFields = lo.Keys(inType.Fields())
 		}
 	}
@@ -386,6 +417,7 @@ func (s *Service) AddSliceEntry(
 		}
 
 		entry.ResponseType = outType.Name()
+		entry.ResponseTSType = &outType
 	}
 
 	thisSlice.Entries = append(thisSlice.Entries, entry)

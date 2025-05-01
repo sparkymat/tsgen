@@ -47,6 +47,7 @@ func TestSliceExport(t *testing.T) {
 		assert.Equal(t, `import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import { Post } from '../models/Post';
+import { User } from '../models/User';
 
 export interface PostCreateRequest {
   authorId: string;
