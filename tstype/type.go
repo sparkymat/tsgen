@@ -10,8 +10,9 @@ import (
 var ErrInvalidType = errors.New("invalid type")
 
 type TSType struct {
-	name   string
-	fields map[string]string
+	name              string
+	fields            map[string]string
+	orderedFieldNames []string
 }
 
 func New(name string) TSType {
@@ -30,6 +31,7 @@ func (t *TSType) Fields() map[string]string {
 
 func (t *TSType) AddField(name string, typeName string) {
 	t.fields[name] = typeName
+	t.orderedFieldNames = append(t.orderedFieldNames, name)
 }
 
 func isModel(fType string) bool {
@@ -44,12 +46,13 @@ func StructToTSType(v any, addID bool) (TSType, error) {
 	}
 
 	tt := TSType{
-		name:   val.Type().Name(),
-		fields: map[string]string{},
+		name:              val.Type().Name(),
+		fields:            map[string]string{},
+		orderedFieldNames: []string{},
 	}
 
 	if addID {
-		tt.fields["id"] = "string"
+		tt.AddField("id", "string")
 	}
 
 	for fi := range val.Type().NumField() {
@@ -71,7 +74,7 @@ func StructToTSType(v any, addID bool) (TSType, error) {
 
 		fieldName, fieldType := fieldToTSType(fieldName, f.Type)
 
-		tt.fields[fieldName] = fieldType
+		tt.AddField(fieldName, fieldType)
 	}
 
 	return tt, nil

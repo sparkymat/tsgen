@@ -10,7 +10,8 @@ import (
 func (m TSType) RenderedFieldsForClass() string {
 	v := ""
 
-	for name, fType := range m.fields {
+	for _, name := range m.orderedFieldNames {
+		fType := m.fields[name]
 		v += fmt.Sprintf("  public %s: %s;\n\n", name, fType)
 	}
 
@@ -20,7 +21,8 @@ func (m TSType) RenderedFieldsForClass() string {
 func (m TSType) RenderedFieldsForInterface() string {
 	v := ""
 
-	for name, fType := range m.fields {
+	for _, name := range m.orderedFieldNames {
+		fType := m.fields[name]
 		v += fmt.Sprintf("  %s: %s;\n", name, fType)
 	}
 
@@ -30,7 +32,8 @@ func (m TSType) RenderedFieldsForInterface() string {
 func (m TSType) RenderedFieldAssignments() string {
 	v := ""
 
-	for name, fType := range m.fields {
+	for _, name := range m.orderedFieldNames {
+		fType := m.fields[name]
 		trimmedName := strings.TrimSuffix(name, "?")
 
 		if strings.HasSuffix(name, "?") {
