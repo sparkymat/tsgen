@@ -59,7 +59,7 @@ func (s Slice) RenderedInterfaceDefinitions() (string, error) {
 	v := ""
 
 	for _, interfaceEntry := range s.Interfaces {
-		renderedInterface, err := renderTemplateToString(template.InterfaceTS, interfaceEntry)
+		renderedInterface, err := renderTemplateToString(template.InterfaceTS, &interfaceEntry)
 		if err != nil {
 			return "", err
 		}
@@ -276,21 +276,21 @@ func (s Slice) RenderedExports() string {
 	for _, entry := range s.Entries {
 		switch entry.Action {
 		case ActionCreate:
-			v += "useCreateMutation,\n"
+			v += "  useCreateMutation,\n"
 		case ActionShow:
-			v += "useShowQuery,\n"
+			v += "  useShowQuery,\n"
 		case ActionDestroy:
-			v += "useDestroyMutation,\n"
+			v += "  useDestroyMutation,\n"
 		case ActionCustomQuery:
-			v += fmt.Sprintf("use%sQuery,\n", strcase.ToCamel(entry.MethodName))
+			v += fmt.Sprintf("  use%sQuery,\n", strcase.ToCamel(entry.MethodName))
 		case ActionList:
-			v += "useListQuery,\n"
+			v += "  useListQuery,\n"
 		case ActionUpdate:
-			v += "useUpdateMutation,\n"
+			v += "  useUpdateMutation,\n"
 		case ActionCustomMemberAction:
-			v += fmt.Sprintf("use%sMutation,\n", strcase.ToCamel(entry.MethodName))
+			v += fmt.Sprintf("  use%sMutation,\n", strcase.ToCamel(entry.MethodName))
 		case ActionCustomMemberMultipartAction:
-			v += fmt.Sprintf("use%sMutation,\n", strcase.ToCamel(entry.MethodName))
+			v += fmt.Sprintf("  use%sMutation,\n", strcase.ToCamel(entry.MethodName))
 		case ActionCustomAction:
 		case ActionCustomMemberQuery:
 		default:

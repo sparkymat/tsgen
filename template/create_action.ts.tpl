@@ -6,11 +6,10 @@
         headers: {
           'X-CSRF-Token': (
             document.querySelector('meta[name="csrf-token"]') as any
-          ).content,
+          ).content
         },
       }),
       invalidatesTags: [
         { type: '{{ .Resource }}', id: 'LIST' },
-        {{ .CustomInvalidates }}
-      ],
+{{ .CustomInvalidates }}      ],
     }),

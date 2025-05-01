@@ -1,3 +1,2 @@
-export interface {{.Name}} {
-  {{ .RenderedFieldsForInterface }}
-}
+export interface {{ .Name }} {
+{{ .RenderedFieldsForInterface }}}

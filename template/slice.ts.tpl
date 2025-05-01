@@ -9,10 +9,8 @@ export const api = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
   tagTypes: ['{{ .Name }}'],
   endpoints: builder => ({
-    {{ .RenderedEndpoints }}
-  })
+{{ .RenderedEndpoints }}  })
 });
 
 export const {
-{{ .RenderedExports }}
-} = api;
+{{ .RenderedExports }}} = api;
