@@ -17,7 +17,8 @@ type TSType struct {
 
 func New(name string) TSType {
 	return TSType{
-		name: name,
+		name:   name,
+		fields: map[string]string{},
 	}
 }
 

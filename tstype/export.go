@@ -7,7 +7,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func (m TSType) RenderedFieldsForClass() string {
+func (m *TSType) RenderedFieldsForClass() string {
 	v := ""
 
 	for _, name := range m.orderedFieldNames {
@@ -18,7 +18,7 @@ func (m TSType) RenderedFieldsForClass() string {
 	return v
 }
 
-func (m TSType) RenderedFieldsForInterface() string {
+func (m *TSType) RenderedFieldsForInterface() string {
 	v := ""
 
 	for _, name := range m.orderedFieldNames {
@@ -29,7 +29,7 @@ func (m TSType) RenderedFieldsForInterface() string {
 	return v
 }
 
-func (m TSType) RenderedFieldAssignments() string {
+func (m *TSType) RenderedFieldAssignments() string {
 	v := ""
 
 	for _, name := range m.orderedFieldNames {
@@ -54,7 +54,7 @@ func (m TSType) RenderedFieldAssignments() string {
 	return v
 }
 
-func (m TSType) Imports() string {
+func (m *TSType) Imports() string {
 	v := ""
 
 	models := lo.Uniq(
