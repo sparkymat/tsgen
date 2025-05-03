@@ -106,7 +106,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 
 			requestInput := "request"
 			if entry.ParentResourceName != "" {
-				requestInput = "({ parentId, request  })"
+				requestInput = "({ parentId, request })"
 			}
 
 			renderedEntry, err := renderTemplateToString(template.CreateActionTS, map[string]string{
@@ -171,13 +171,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				return v + "=${encodeURIComponent(" + v + ")}"
 			}), "&")
 
-			fields := []string{}
-			if entry.ParentResourceName != "" {
-				fields = append(fields, "parentId")
-			}
-
-			fields = append(fields, entry.RequestFields...)
-			fieldNames := strings.Join(fields, ", ")
+			fieldNames := strings.Join(entry.RequestFields, ", ")
 
 			if entry.ParentResourceName != "" {
 				fieldNames = "parentId, request: {" + fieldNames + "}"
