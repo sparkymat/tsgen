@@ -141,10 +141,19 @@ func (s Slice) RenderedEndpoints() (string, error) {
 
 			fieldNames := strings.Join(entry.RequestFields, ", ")
 
+			if entry.ParentResourceName != "" {
+				fieldNames = "parentId, request: {" + fieldNames + "}"
+			}
+
+			requestType := entry.RequestType
+			if entry.ParentResourceName != "" {
+				requestType += "WithParent"
+			}
+
 			values := map[string]string{
 				"MethodName":    entry.MethodName,
 				"ResponseType":  entry.ResponseType,
-				"RequestType":   entry.RequestType,
+				"RequestType":   requestType,
 				"ResourceURL":   resourceURL,
 				"Resource":      s.Name,
 				"ResourceQuery": "?" + resourceQuery,
@@ -169,6 +178,10 @@ func (s Slice) RenderedEndpoints() (string, error) {
 
 			fields = append(fields, entry.RequestFields...)
 			fieldNames := strings.Join(fields, ", ")
+
+			if entry.ParentResourceName != "" {
+				fieldNames = "parentId, request: {" + fieldNames + "}"
+			}
 
 			requestType := entry.RequestType
 			if entry.ParentResourceName != "" {
