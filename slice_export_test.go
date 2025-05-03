@@ -106,7 +106,7 @@ export const {
 
 		err = s.AddSliceEntry(
 			"Post",
-			"",
+			"Blog",
 			"create",
 			tsgen.ActionCreate,
 			PostCreateRequest{},
@@ -118,7 +118,7 @@ export const {
 
 		err = s.AddSliceEntry(
 			"Post",
-			"",
+			"Blog",
 			"search",
 			tsgen.ActionCustomQuery,
 			PostSearchRequest{},
@@ -135,6 +135,11 @@ export const {
 
 import { Post } from '../models/Post';
 import { User } from '../models/User';
+
+export interface PostSearchRequestWithParent {
+  parentId: string;
+  request: PostSearchRequest;
+}
 
 export interface PostSearchRequest {
   query: string;
