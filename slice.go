@@ -318,7 +318,9 @@ func (s Slice) RenderedImports() string {
 
 		if entry.ResponseTSType != nil {
 			for _, fieldType := range entry.ResponseTSType.Fields() {
-				usedTypes = append(usedTypes, fieldType)
+				// strip array bits
+				cleanedupFieldType := strings.TrimSuffix(fieldType, "[]")
+				usedTypes = append(usedTypes, cleanedupFieldType)
 			}
 		}
 	}
@@ -332,6 +334,7 @@ func (s Slice) RenderedImports() string {
 		return !lo.Contains([]string{"string", "number", "boolean"}, tt)
 	})
 	slices.Sort(missingTypes)
+	missingTypes = lo.Uniq(missingTypes)
 
 	for _, m := range missingTypes {
 		v += fmt.Sprintf("import { %s } from '../models/%s';\n", m, m)
