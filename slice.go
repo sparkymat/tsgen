@@ -203,15 +203,18 @@ func (s Slice) RenderedEndpoints() (string, error) {
 			v += renderedEntry
 		case ActionDestroy:
 			queryParams := "id"
+			requestType := entry.RequestType
 
-			if entry.ParentResourceName != "" && entry.RequestType != "string" {
-				queryParams = "{ id, parentId } : " + entry.RequestType
+			// Assume request type is string since you can't pass info to DELETE
+			if entry.ParentResourceName != "" {
+				requestType = s.Name + "DestroyRequest"
+				queryParams = "{ id, parentId } : " + s.Name + "DestroyRequest"
 			}
 
 			renderedEntry, err := renderTemplateToString(template.DestroyActionTS, map[string]string{
 				"ResourceURL":       resourceURL,
 				"Resource":          s.Name,
-				"RequestType":       entry.RequestType,
+				"RequestType":       requestType,
 				"QueryParams":       queryParams,
 				"CustomInvalidates": customInvalidatesString,
 			})
@@ -433,6 +436,14 @@ func (s *Service) AddSliceEntry(
 			if _, found := s.models[inType.Name()]; found {
 				if !lo.Contains(thisSlice.ImportedModels, inType.Name()) {
 					thisSlice.ImportedModels = append(thisSlice.ImportedModels, inType.Name())
+				}
+
+				if parentResourceName != "" {
+					wrapperTypeName := resourceName + strcase.ToCamel(methodName) + "Request"
+					wrapperType := tstype.New(wrapperTypeName)
+					wrapperType.AddField("parentId", "string")
+					wrapperType.AddField("id", "string")
+					thisSlice.Interfaces[wrapperTypeName] = wrapperType
 				}
 			} else {
 				thisSlice.Interfaces[inType.Name()] = inType
