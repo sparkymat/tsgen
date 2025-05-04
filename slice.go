@@ -174,7 +174,11 @@ func (s Slice) RenderedEndpoints() (string, error) {
 			fieldNames := strings.Join(entry.RequestFields, ", ")
 
 			if entry.ParentResourceName != "" {
-				fieldNames = "parentId, request: {" + fieldNames + "}"
+				if len(entry.RequestFields) > 0 {
+					fieldNames = "parentId, request: {" + fieldNames + "}"
+				} else {
+					fieldNames = "parentId"
+				}
 			}
 
 			requestType := entry.RequestType
