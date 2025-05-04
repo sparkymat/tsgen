@@ -423,6 +423,14 @@ func (s *Service) AddSliceEntry(
 		if inString, isString := in.(string); isString {
 			entry.RequestType = inString
 			entry.RequestFields = []string{}
+
+			if parentResourceName != "" {
+				wrapperTypeName := resourceName + strcase.ToCamel(methodName) + "Request"
+				wrapperType := tstype.New(wrapperTypeName)
+				wrapperType.AddField("parentId", "string")
+				wrapperType.AddField("id", "string")
+				thisSlice.Interfaces[wrapperTypeName] = wrapperType
+			}
 		} else {
 			inType, err := tstype.StructToTSType(in, addIDToIn)
 			if err != nil {
@@ -436,14 +444,6 @@ func (s *Service) AddSliceEntry(
 			if _, found := s.models[inType.Name()]; found {
 				if !lo.Contains(thisSlice.ImportedModels, inType.Name()) {
 					thisSlice.ImportedModels = append(thisSlice.ImportedModels, inType.Name())
-				}
-
-				if parentResourceName != "" {
-					wrapperTypeName := resourceName + strcase.ToCamel(methodName) + "Request"
-					wrapperType := tstype.New(wrapperTypeName)
-					wrapperType.AddField("parentId", "string")
-					wrapperType.AddField("id", "string")
-					thisSlice.Interfaces[wrapperTypeName] = wrapperType
 				}
 			} else {
 				thisSlice.Interfaces[inType.Name()] = inType
