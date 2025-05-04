@@ -204,7 +204,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 		case ActionDestroy:
 			queryParams := "id"
 
-			if entry.RequestType != "string" {
+			if entry.ParentResourceName != "" && entry.RequestType != "string" {
 				queryParams = "{ id, parentId } : " + entry.RequestType
 			}
 
@@ -225,12 +225,21 @@ func (s Slice) RenderedEndpoints() (string, error) {
 			fieldAssignments := strings.Join(otherFields, ",\n")
 			fieldNames := strings.Join(otherFields, ", ")
 
+			if entry.ParentResourceName != "" {
+				fieldNames = "parentId, request: {" + fieldNames + "}"
+			}
+
+			requestType := entry.RequestType
+			if entry.ParentResourceName != "" {
+				requestType += "WithParent"
+			}
+
 			renderedEntry, err := renderTemplateToString(template.UpdateActionTS, map[string]string{
 				"ResourceURL":       resourceURL,
 				"Resource":          s.Name,
 				"FieldNames":        fieldNames,
 				"ResponseType":      entry.ResponseType,
-				"RequestType":       entry.RequestType,
+				"RequestType":       requestType,
 				"FieldAssignments":  fieldAssignments,
 				"CustomInvalidates": customInvalidatesString,
 			})
@@ -244,13 +253,22 @@ func (s Slice) RenderedEndpoints() (string, error) {
 			fieldAssignments := strings.Join(otherFields, ",\n")
 			fieldNames := strings.Join(otherFields, ", ")
 
+			if entry.ParentResourceName != "" {
+				fieldNames = "parentId, request: {" + fieldNames + "}"
+			}
+
+			requestType := entry.RequestType
+			if entry.ParentResourceName != "" {
+				requestType += "WithParent"
+			}
+
 			renderedEntry, err := renderTemplateToString(template.CustomMemberActionTS, map[string]string{
 				"MethodName":        entry.MethodName,
 				"ResourceURL":       resourceURL,
 				"Resource":          s.Name,
 				"FieldNames":        fieldNames,
 				"ResponseType":      entry.ResponseType,
-				"RequestType":       entry.RequestType,
+				"RequestType":       requestType,
 				"FieldAssignments":  fieldAssignments,
 				"CustomInvalidates": customInvalidatesString,
 			})
@@ -266,13 +284,22 @@ func (s Slice) RenderedEndpoints() (string, error) {
 			}), "\n")
 			fieldNames := strings.Join(otherFields, ", ")
 
+			if entry.ParentResourceName != "" {
+				fieldNames = "parentId, request: {" + fieldNames + "}"
+			}
+
+			requestType := entry.RequestType
+			if entry.ParentResourceName != "" {
+				requestType += "WithParent"
+			}
+
 			renderedEntry, err := renderTemplateToString(template.CustomMemberMultipartAction, map[string]string{
 				"MethodName":          entry.MethodName,
 				"ResourceURL":         resourceURL,
 				"Resource":            s.Name,
 				"FieldNames":          fieldNames,
 				"ResponseType":        entry.ResponseType,
-				"RequestType":         entry.RequestType,
+				"RequestType":         requestType,
 				"FormDataAssignments": formDataAssignments,
 				"FileField":           entry.FileField,
 				"CustomInvalidates":   customInvalidatesString,
