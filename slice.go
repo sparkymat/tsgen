@@ -202,9 +202,17 @@ func (s Slice) RenderedEndpoints() (string, error) {
 
 			v += renderedEntry
 		case ActionDestroy:
+			queryParams := "id"
+
+			if entry.RequestType != "string" {
+				queryParams = "{ id, parentId } : " + entry.RequestType
+			}
+
 			renderedEntry, err := renderTemplateToString(template.DestroyActionTS, map[string]string{
 				"ResourceURL":       resourceURL,
 				"Resource":          s.Name,
+				"RequestType":       entry.RequestType,
+				"QueryParams":       queryParams,
 				"CustomInvalidates": customInvalidatesString,
 			})
 			if err != nil {

@@ -1,5 +1,5 @@
-    destroy: builder.mutation<void, string>({
-      query: id => ({
+    destroy: builder.mutation<void, {{ .RequestType }}>({
+      query: ({{ .QueryParams }}) => ({
         url: `{{ .ResourceURL }}/${id}`,
         method: 'DELETE',
         headers: {
