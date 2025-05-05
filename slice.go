@@ -232,7 +232,8 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				fieldNames = "parentId"
 
 				if len(otherFields) > 0 {
-					fieldNames += ", request: {" + fieldNames + "}"
+					innerFieldNames := strings.Join(entry.RequestFields, ", ")
+					fieldNames += ", request: {" + innerFieldNames + "}"
 				}
 			}
 
@@ -264,7 +265,8 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				fieldNames = "parentId"
 
 				if len(otherFields) > 0 {
-					fieldNames += ", request: {" + fieldNames + "}"
+					innerFieldNames := strings.Join(entry.RequestFields, ", ")
+					fieldNames += ", request: {" + innerFieldNames + "}"
 				}
 			}
 
@@ -299,7 +301,8 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				fieldNames = "parentId"
 
 				if len(otherFields) > 0 {
-					fieldNames += ", request: {" + fieldNames + "}"
+					innerFieldNames := strings.Join(entry.RequestFields, ", ")
+					fieldNames += ", request: {" + innerFieldNames + "}"
 				}
 			}
 

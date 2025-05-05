@@ -1,5 +1,5 @@
     {{ .MethodName }}: builder.mutation<void, {{ .RequestType }}>({
-      query: ({ id, {{ .FieldNames }} }: {{ .RequestType }}) => ({
+      query: ({ {{ .FieldNames }} }: {{ .RequestType }}) => ({
         url: `{{ .ResourceURL }}/${id}/{{ .MethodName }}`,
         method: 'POST',
         body: {
