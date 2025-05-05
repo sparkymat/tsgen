@@ -16,7 +16,7 @@
         },
       }),
       invalidatesTags: (_result, _error, arg) => [
-        { type: '{{ .Resource }}', id: arg.id },
+        { type: '{{ .Resource }}', id: arg.{{ .InvalidateIdField }} },
         { type: '{{ .Resource }}', id: 'LIST' },
         {{ .CustomInvalidates }}
       ],

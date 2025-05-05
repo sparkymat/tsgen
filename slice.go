@@ -239,6 +239,11 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				requestType += "WithParent"
 			}
 
+			invalidateIdField := "id"
+			if entry.ParentResourceName != "" {
+				invalidateIdField = "request.id"
+			}
+
 			renderedEntry, err := renderTemplateToString(template.UpdateActionTS, map[string]string{
 				"ResourceURL":       resourceURL,
 				"Resource":          s.Name,
@@ -247,6 +252,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				"RequestType":       requestType,
 				"FieldAssignments":  fieldAssignments,
 				"CustomInvalidates": customInvalidatesString,
+				"InvalidateIdField": invalidateIdField,
 			})
 			if err != nil {
 				return "", err
@@ -269,6 +275,11 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				requestType += "WithParent"
 			}
 
+			invalidateIdField := "id"
+			if entry.ParentResourceName != "" {
+				invalidateIdField = "request.id"
+			}
+
 			renderedEntry, err := renderTemplateToString(template.CustomMemberActionTS, map[string]string{
 				"MethodName":        entry.MethodName,
 				"ResourceURL":       resourceURL,
@@ -278,6 +289,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				"RequestType":       requestType,
 				"FieldAssignments":  fieldAssignments,
 				"CustomInvalidates": customInvalidatesString,
+				"InvalidateIdField": invalidateIdField,
 			})
 			if err != nil {
 				return "", err
@@ -302,6 +314,11 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				requestType += "WithParent"
 			}
 
+			invalidateIdField := "id"
+			if entry.ParentResourceName != "" {
+				invalidateIdField = "request.id"
+			}
+
 			renderedEntry, err := renderTemplateToString(template.CustomMemberMultipartAction, map[string]string{
 				"MethodName":          entry.MethodName,
 				"ResourceURL":         resourceURL,
@@ -312,6 +329,7 @@ func (s Slice) RenderedEndpoints() (string, error) {
 				"FormDataAssignments": formDataAssignments,
 				"FileField":           entry.FileField,
 				"CustomInvalidates":   customInvalidatesString,
+				"InvalidateIdField":   invalidateIdField,
 			})
 			if err != nil {
 				return "", err
