@@ -230,11 +230,8 @@ func (s Slice) RenderedEndpoints() (string, error) {
 
 			if entry.ParentResourceName != "" {
 				fieldNames = "parentId"
-
-				if len(otherFields) > 0 {
-					innerFieldNames := strings.Join(entry.RequestFields, ", ")
-					fieldNames += ", request: {" + innerFieldNames + "}"
-				}
+				innerFieldNames := strings.Join(entry.RequestFields, ", ")
+				fieldNames += ", request: {" + innerFieldNames + "}"
 			}
 
 			requestType := entry.RequestType
@@ -263,11 +260,8 @@ func (s Slice) RenderedEndpoints() (string, error) {
 
 			if entry.ParentResourceName != "" {
 				fieldNames = "parentId"
-
-				if len(otherFields) > 0 {
-					innerFieldNames := strings.Join(entry.RequestFields, ", ")
-					fieldNames += ", request: {" + innerFieldNames + "}"
-				}
+				innerFieldNames := strings.Join(entry.RequestFields, ", ")
+				fieldNames += ", request: {" + innerFieldNames + "}"
 			}
 
 			requestType := entry.RequestType
@@ -299,11 +293,8 @@ func (s Slice) RenderedEndpoints() (string, error) {
 
 			if entry.ParentResourceName != "" {
 				fieldNames = "parentId"
-
-				if len(otherFields) > 0 {
-					innerFieldNames := strings.Join(entry.RequestFields, ", ")
-					fieldNames += ", request: {" + innerFieldNames + "}"
-				}
+				innerFieldNames := strings.Join(entry.RequestFields, ", ")
+				fieldNames += ", request: {" + innerFieldNames + "}"
 			}
 
 			requestType := entry.RequestType
